@@ -60,7 +60,7 @@ func main() {
 	router.Use(corsMiddleware)
 
 	// Get port from environment
-	port := getEnv("PORT", "8050")
+	port := getEnv("PORT", "8080")
 
 	log.Printf("Auth service starting on port %s", port)
 	log.Fatal(http.ListenAndServe("0.0.0.0:"+port, router))

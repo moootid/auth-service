@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  auth-service:
+    build: .
+    ports:
+      - "8050:8050"
+    environment:
+      - PORT=8050
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - DB_SSLMODE=${DB_SSLMODE}
+      - JWT_SECRET=${JWT_SECRET}
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

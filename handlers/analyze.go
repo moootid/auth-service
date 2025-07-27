@@ -1,12 +1,17 @@
 package handlers
 
 import (
+	"auth-service/database"
+	"auth-service/models"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+
+	"github.com/google/uuid"
+	"github.com/gorilla/mux"
 )
 
 // AnalyzeVideoProxy redirects requests to the AnalyzeVideo handler at http://localhost:8000/video/analyze
@@ -106,4 +111,82 @@ func AnalyzeVideoProxy(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Printf("Successfully proxied video analysis request for user %d", uint(userID))
+}
+
+// GetVideoAnalyses gets all video analysis jobs for the authenticated user
+func GetVideoAnalyses(w http.ResponseWriter, r *http.Request) {
+	// Get user ID from context (set by auth middleware)
+	userID, ok := r.Context().Value("user_id").(float64)
+	if !ok {
+		http.Error(w, "Invalid user context", http.StatusInternalServerError)
+		return
+	}
+
+	// Get video analysis jobs from the database filtered by user ID
+	var videoAnalyses []models.VideoAnalysis
+	result := database.DB.Where("created_by = ?", uint(userID)).Order("created_at DESC").Find(&videoAnalyses)
+
+	if result.Error != nil {
+		log.Printf("Error retrieving video analyses for user %d: %v", uint(userID), result.Error)
+		http.Error(w, "Error retrieving video analyses", http.StatusInternalServerError)
+		return
+	}
+
+	// Set response header
+	w.Header().Set("Content-Type", "application/json")
+
+	// Return the video analyses as JSON
+	if err := json.NewEncoder(w).Encode(videoAnalyses); err != nil {
+		log.Printf("Error encoding video analyses response: %v", err)
+		http.Error(w, "Error encoding response", http.StatusInternalServerError)
+		return
+	}
+
+	log.Printf("Successfully retrieved %d video analyses for user %d", len(videoAnalyses), uint(userID))
+}
+
+// GetAnalyzeVideoProxy gets information about a specific video analysis job by ID
+func GetAnalyzeVideoProxy(w http.ResponseWriter, r *http.Request) {
+	// Get user ID from context (set by auth middleware)
+	userID, ok := r.Context().Value("user_id").(float64)
+	if !ok {
+		http.Error(w, "Invalid user context", http.StatusInternalServerError)
+		return
+	}
+
+	// Get the job ID from URL path
+	vars := mux.Vars(r)
+	jobID := vars["id"]
+
+	// Validate UUID format
+	if _, err := uuid.Parse(jobID); err != nil {
+		http.Error(w, "Invalid job ID format", http.StatusBadRequest)
+		return
+	}
+
+	// Get video analysis job from database
+	var videoAnalysis models.VideoAnalysis
+	result := database.DB.Where("job_id = ? AND created_by = ?", jobID, uint(userID)).First(&videoAnalysis)
+
+	if result.Error != nil {
+		if result.Error.Error() == "record not found" {
+			http.Error(w, "Video analysis not found or access denied", http.StatusNotFound)
+			return
+		}
+		log.Printf("Error retrieving video analysis %s for user %d: %v", jobID, uint(userID), result.Error)
+		http.Error(w, "Error retrieving video analysis information", http.StatusInternalServerError)
+		return
+	}
+
+	// Set response header
+	w.Header().Set("Content-Type", "application/json")
+
+	// Return the video analysis as JSON
+	if err := json.NewEncoder(w).Encode(videoAnalysis); err != nil {
+		log.Printf("Error encoding video analysis response: %v", err)
+		http.Error(w, "Error encoding response", http.StatusInternalServerError)
+		return
+	}
+
+	log.Printf("Successfully retrieved video analysis %s for user %d", jobID, uint(userID))
 }

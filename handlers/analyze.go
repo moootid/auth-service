@@ -145,8 +145,8 @@ func GetVideoAnalyses(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Successfully retrieved %d video analyses for user %d", len(videoAnalyses), uint(userID))
 }
 
-// GetAnalyzeVideoProxy gets information about a specific video analysis job by ID
-func GetAnalyzeVideoProxy(w http.ResponseWriter, r *http.Request) {
+// GetVideoAnalysesInfo gets information about a specific video analysis job by ID
+func GetVideoAnalysesInfo(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from context (set by auth middleware)
 	userID, ok := r.Context().Value("user_id").(float64)
 	if !ok {

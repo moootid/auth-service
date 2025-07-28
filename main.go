@@ -49,7 +49,9 @@ func main() {
 	router.HandleFunc("/auth/video/analyze",
 		middleware.AuthMiddleware(handlers.AnalyzeVideoProxy)).Methods("POST")
 	router.HandleFunc("/auth/video/analyze",
-		middleware.AuthMiddleware(handlers.GetAnalyzeVideoProxy)).Methods("GET")
+		middleware.AuthMiddleware(handlers.GetVideoAnalyses)).Methods("GET")
+	router.HandleFunc("/auth/video/analyze/{id}",
+		middleware.AuthMiddleware(handlers.GetVideoAnalysesInfo)).Methods("GET")
 	// Video transcoding routes
 	router.HandleFunc("/auth/video/transcode",
 		middleware.AuthMiddleware(handlers.TranscodeVideoProxy)).Methods("POST")

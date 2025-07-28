@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
@@ -24,6 +25,9 @@ func main() {
 
 	// Setup routes
 	router := mux.NewRouter()
+	
+	// Metrics endpoint
+	router.Handle("/metrics", promhttp.Handler()).Methods("GET")
 
 	// Health check
 	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
